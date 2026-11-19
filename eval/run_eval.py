@@ -22,9 +22,9 @@ import contextlib
 import importlib
 import json
 import time
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from collections.abc import Iterator
 from typing import Any
 
 from core.orchestrator import resume_review, start_review

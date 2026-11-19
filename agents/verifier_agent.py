@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Any
 
 from agents.merge_sim_agent import _is_build_error, _run_test_suite_in_sandbox
-from tools.test_env import get_test_timeout
 from core.audit import record_for_state
 from core.logging import get_logger
 from core.state import (
@@ -36,6 +35,7 @@ from tools.bandit_runner import run_bandit
 from tools.git_ops import apply_patch, cleanup_worktree, create_merged_worktree, create_worktree
 from tools.gitleaks_runner import run_gitleaks
 from tools.semgrep_runner import run_semgrep
+from tools.test_env import get_test_timeout
 
 logger = get_logger(__name__)
 

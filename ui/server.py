@@ -190,8 +190,9 @@ def get_system_status() -> dict[str, Any]:
         "primary_model": settings.primary_model,
         "fast_model": settings.fast_model,
         "fallback_model": settings.fallback_model,
-        "has_gemini_key": bool(settings.gemini_api_key),
-        "has_groq_key": bool(settings.groq_api_key),
+        # A "your_..." placeholder copied from .env.example is not a key.
+        "has_gemini_key": provider_available("gemini/"),
+        "has_groq_key": provider_available("groq/"),
         "current_repo_path": str(local_repo),
         "current_branch": current_branch,
         "demo_repo_path": str(default_demo_path()),

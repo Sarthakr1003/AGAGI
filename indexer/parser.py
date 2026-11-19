@@ -20,8 +20,8 @@ logger = get_logger(__name__)
 # Tree-sitter setup
 _HAS_TREE_SITTER = False
 try:
-    from tree_sitter import Language, Parser
     import tree_sitter_python
+    from tree_sitter import Language, Parser
 
     _PY_LANG = Language(tree_sitter_python.language())
     _TS_PARSER = Parser(_PY_LANG)

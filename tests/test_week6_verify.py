@@ -8,7 +8,6 @@ pause/resume, the Verifier and the retry loop.
 
 from __future__ import annotations
 
-import difflib
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -17,7 +16,7 @@ import pytest
 
 import core.audit as audit_mod
 import core.orchestrator as orch
-from agents.fix_agent import GeneratedPatchOutput
+from agents.fix_agent import CodeEdit, GeneratedPatchOutput
 from agents.review_agent import CodeReviewOutput
 from core.audit import AuditLog
 from core.state import ApprovalDecision, ApprovalStatus, ChangeSet, ReviewVerdict
@@ -43,17 +42,6 @@ def _merged_file(repo: Path, branch: str, rel: str) -> str:
         return (wt / rel).read_text(encoding="utf-8")
     finally:
         cleanup_worktree(repo, wt)
-
-
-def _diff(rel: str, before: str, after: str) -> str:
-    return "".join(
-        difflib.unified_diff(
-            before.splitlines(keepends=True),
-            after.splitlines(keepends=True),
-            fromfile=f"a/{rel}",
-            tofile=f"b/{rel}",
-        )
-    )
 
 
 def _ai_down(*_a: Any, **_k: Any) -> Any:
@@ -86,16 +74,18 @@ def _run(mocks: list[Any], fn: Any, *args: Any) -> Any:
 
 
 def _good_breaks_test_patch(repo: Path) -> GeneratedPatchOutput:
-    merged = _merged_file(repo, "breaks-test", "calc.py")
-    fixed = merged.replace("def average(nums, round_to):", "def average(nums, round_to=2):")
-    assert fixed != merged
-    return GeneratedPatchOutput(unified_diff=_diff("calc.py", merged, fixed), rationale="Default round_to")
+    assert "def average(nums, round_to):" in _merged_file(repo, "breaks-test", "calc.py")
+    return GeneratedPatchOutput(
+        edits=[CodeEdit(search="def average(nums, round_to):", replace="def average(nums, round_to=2):")],
+        rationale="Default round_to",
+    )
 
 
 def _useless_breaks_test_patch(repo: Path) -> GeneratedPatchOutput:
-    merged = _merged_file(repo, "breaks-test", "calc.py")
-    changed = merged.replace('"""Calculate rounded average."""', '"""Calculate a rounded average."""')
-    return GeneratedPatchOutput(unified_diff=_diff("calc.py", merged, changed), rationale="Docstring only")
+    return GeneratedPatchOutput(
+        edits=[CodeEdit(search='"""Calculate rounded average."""', replace='"""Calculate a rounded average."""')],
+        rationale="Docstring only",
+    )
 
 
 def _approve(thread_id: str, indices: list[int]) -> dict[str, Any]:
@@ -186,11 +176,17 @@ def test_failed_fix_retries_then_escalates(calc_repo: Path, monkeypatch: pytest.
 
 def test_unsafe_eval_fix_clears_scanner_finding(calc_repo: Path) -> None:
     merged = _merged_file(calc_repo, "unsafe-eval", "calc.py")
-    fixed = merged.replace("    return eval(expr)", "    return ast.literal_eval(expr)")
-    fixed = fixed.replace('"""Basic arithmetic functions with docstrings."""\n',
-                          '"""Basic arithmetic functions with docstrings."""\nimport ast\n', 1)
-    assert fixed != merged
-    good = GeneratedPatchOutput(unified_diff=_diff("calc.py", merged, fixed), rationale="No eval")
+    assert "    return eval(expr)" in merged
+    good = GeneratedPatchOutput(
+        edits=[
+            CodeEdit(
+                search='"""Basic arithmetic functions with docstrings."""',
+                replace='"""Basic arithmetic functions with docstrings."""\nimport ast',
+            ),
+            CodeEdit(search="    return eval(expr)", replace="    return ast.literal_eval(expr)"),
+        ],
+        rationale="No eval",
+    )
 
     mocks = _mocks([good])
     run = _run(mocks, orch.start_review, ChangeSet(repo_path=calc_repo, base_ref="main", head_ref="unsafe-eval"))

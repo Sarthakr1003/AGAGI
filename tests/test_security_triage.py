@@ -14,13 +14,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
-
-from agents.dependency_agent import run_dependency_agent
 from agents.reporter_agent import run_reporter_agent
-from agents.security_agent import run_security_agent
 from agents.triage_agent import (
     FindingTriageOutput,
     compute_file_hash,
@@ -28,21 +24,18 @@ from agents.triage_agent import (
     run_triage_agent,
     triage_single_finding,
 )
-from core.orchestrator import run_review
 from core.state import (
     ChangeSet,
     Finding,
     FindingType,
-    PipelineStage,
     ReviewVerdict,
     Severity,
-    make_initial_state,
 )
-from tools.bandit_runner import parse_bandit_json, run_bandit
+from tools.bandit_runner import parse_bandit_json
 from tools.deduplicator import deduplicate_findings
-from tools.gitleaks_runner import parse_gitleaks_json, scan_secrets_builtin
-from tools.osv_scanner import is_dependency_manifest, parse_pip_audit_json, run_dependency_scan
-from tools.semgrep_runner import parse_semgrep_json, run_semgrep
+from tools.gitleaks_runner import scan_secrets_builtin
+from tools.osv_scanner import is_dependency_manifest, parse_pip_audit_json
+from tools.semgrep_runner import parse_semgrep_json
 
 
 def test_bandit_parser_normalization():

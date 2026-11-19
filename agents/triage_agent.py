@@ -19,6 +19,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from core.ablation import ablation_active
 from core.llm import chat_structured
 from core.logging import get_logger
 from core.state import Finding, ReviewState, Severity
@@ -168,6 +169,16 @@ def run_triage_agent(state: ReviewState) -> dict[str, Any]:
             "findings": [],
             "all_findings": [],
             "triaged_findings": [],
+        }
+
+    if ablation_active("no_triage"):
+        logger.info("triage_skipped_ablation", kept=len(combined))
+        for finding in combined:
+            finding.is_false_positive = False
+        return {
+            "findings": list(combined),
+            "all_findings": list(combined),
+            "triaged_findings": list(combined),
         }
 
     # Rank by scanner severity first

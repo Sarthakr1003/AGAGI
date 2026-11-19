@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from core.logging import get_logger
-from indexer.parser import SymbolRecord, parse_source_file
+from indexer.parser import parse_source_file
 
 logger = get_logger(__name__)
 

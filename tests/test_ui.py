@@ -16,7 +16,7 @@ client = TestClient(app)
 def test_ui_index_endpoint() -> None:
     resp = client.get("/")
     assert resp.status_code == 200
-    assert "Agentic Reviewer" in resp.text
+    assert "Agentic Code Reviewer" in resp.text
     assert "Review" in resp.text
 
 

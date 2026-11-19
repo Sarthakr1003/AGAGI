@@ -18,10 +18,10 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
+from core.ablation import ablation_active
 from core.logging import get_logger
 from core.state import PipelineStage, ReviewState, SimulationResult, TestCaseResult
 from tools.docker_runner import is_docker_available, run_in_sandbox
@@ -36,6 +36,14 @@ from tools.project_detector import detect_project
 from tools.test_env import get_test_command_override, get_test_timeout, resolve_test_python
 
 logger = get_logger(__name__)
+
+# Terminal colour codes (e.g. "\x1b[1m") that pytest emits when it thinks it is
+# writing to a colour terminal. They show up as garbage in logs and the UI.
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def _strip_ansi(text: str) -> str:
+    return _ANSI_ESCAPE_RE.sub("", text or "")
 
 
 def _is_build_error(stdout: str, stderr: str) -> bool:
@@ -125,6 +133,10 @@ def _run_test_suite_in_sandbox(
 
         env = dict(os.environ)
         env["PYTHONPATH"] = f"{wt_dir}{os.pathsep}{env.get('PYTHONPATH', '')}"
+        # Plain-text output: the logs are shown in the dashboard, not a terminal.
+        env.pop("FORCE_COLOR", None)
+        env["NO_COLOR"] = "1"
+        env["PY_COLORS"] = "0"
 
         try:
             proc = subprocess.run(
@@ -156,7 +168,7 @@ def _run_test_suite_in_sandbox(
         except Exception as exc:
             logger.warning("junit_xml_parse_failed", error=str(exc))
 
-    return exit_code, stdout, stderr, timed_out, test_cases
+    return exit_code, _strip_ansi(stdout), _strip_ansi(stderr), timed_out, test_cases
 
 
 def run_merge_simulation_agent(state: ReviewState) -> dict[str, Any]:
@@ -226,27 +238,30 @@ def run_merge_simulation_agent(state: ReviewState) -> dict[str, Any]:
     # Run tests on base_ref so pre-existing failures are NOT blamed on the PR
     base_wt: Path | None = None
     baseline_failing_keys: set[str] = set()
-    try:
-        base_wt = create_worktree(cs.repo_path, cs.base_ref)
-        b_code, b_out, b_err, b_timeout, b_cases = _run_test_suite_in_sandbox(
-            base_wt, timeout_seconds=get_test_timeout(), xml_name=".base_junit.xml",
-            repo_path=cs.repo_path,
-        )
-        for tc in b_cases:
-            if tc.status in ("failed", "error"):
-                baseline_failing_keys.add(tc.test_id)
-                baseline_failing_keys.add(tc.name)
-        logger.info(
-            "baseline_run_complete",
-            base_ref=cs.base_ref,
-            total_baseline=len(b_cases),
-            failing_baseline=len(baseline_failing_keys),
-        )
-    except Exception as exc:
-        logger.warning("baseline_run_failed", error=str(exc))
-    finally:
-        if base_wt:
-            cleanup_worktree(cs.repo_path, base_wt)
+    if ablation_active("no_differential"):
+        logger.info("baseline_run_skipped_ablation")
+    else:
+        try:
+            base_wt = create_worktree(cs.repo_path, cs.base_ref)
+            b_code, b_out, b_err, b_timeout, b_cases = _run_test_suite_in_sandbox(
+                base_wt, timeout_seconds=get_test_timeout(), xml_name=".base_junit.xml",
+                repo_path=cs.repo_path,
+            )
+            for tc in b_cases:
+                if tc.status in ("failed", "error"):
+                    baseline_failing_keys.add(tc.test_id)
+                    baseline_failing_keys.add(tc.name)
+            logger.info(
+                "baseline_run_complete",
+                base_ref=cs.base_ref,
+                total_baseline=len(b_cases),
+                failing_baseline=len(baseline_failing_keys),
+            )
+        except Exception as exc:
+            logger.warning("baseline_run_failed", error=str(exc))
+        finally:
+            if base_wt:
+                cleanup_worktree(cs.repo_path, base_wt)
 
     # ── Stage 3: Merged Run in Sandbox Worktree ───────────────────────────────
     merged_wt: Path | None = None

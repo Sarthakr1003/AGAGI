@@ -10,7 +10,6 @@ and the recommended fixed version. Skips license and supply-chain checks.
 from __future__ import annotations
 
 import json
-import re
 import shutil
 import subprocess
 import sys
@@ -19,7 +18,6 @@ from typing import Sequence
 
 from core.logging import get_logger
 from core.state import Finding, FindingType, Severity
-from tools.docker_runner import is_docker_available, run_in_sandbox
 
 logger = get_logger(__name__)
 

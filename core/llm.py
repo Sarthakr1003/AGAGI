@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import sqlite3
 import threading
 import time
@@ -24,10 +26,10 @@ from typing import Any, TypeVar
 import litellm
 from pydantic import BaseModel, ValidationError
 from tenacity import (
+    RetryCallState,
     retry,
-    retry_if_exception_type,
+    retry_if_exception,
     stop_after_attempt,
-    wait_exponential,
 )
 
 from core.config import settings
@@ -237,10 +239,32 @@ def _prepare_call_kwargs(model: str, kwargs: dict[str, Any]) -> dict[str, Any]:
     return call_kwargs
 
 
+_NO_RETRY_MARKERS = ("request too large", "perday", "per day")
+
+
+def _should_retry(exc: BaseException) -> bool:
+    """Retry transient errors, but not a request over the token limit or a used-up daily quota."""
+    if not isinstance(exc, _RETRY_EXCEPTIONS):
+        return False
+    msg = str(exc).lower()
+    return not any(marker in msg for marker in _NO_RETRY_MARKERS)
+
+
+def _retry_wait(retry_state: RetryCallState) -> float:
+    """Wait as long as the provider asks ("try again in 7.5s", retryDelay "8s"), else back off."""
+    exc = retry_state.outcome.exception() if retry_state.outcome else None
+    msg = str(exc or "")
+    m = re.search(r"try again in (?:(\d+)m)?([\d.]+)s", msg) or re.search(r'retryDelay\W+([\d.]+)s', msg)
+    if m:
+        minutes = float(m.group(1)) if m.lastindex == 2 and m.group(1) else 0.0
+        return min(minutes * 60 + float(m.group(m.lastindex)) + 1.0, 90.0)
+    return float(min(2 ** retry_state.attempt_number, 30))
+
+
 @retry(
-    retry=retry_if_exception_type(_RETRY_EXCEPTIONS),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    stop=stop_after_attempt(3),
+    retry=retry_if_exception(_should_retry),
+    wait=_retry_wait,
+    stop=stop_after_attempt(6),
     reraise=True,
 )
 def _call_with_retry(
@@ -265,7 +289,12 @@ def chat(
       1. SQLite prompt-hash cache lookup
       2. Fallback chain: Gemini -> Groq -> Ollama
       3. Rate limiting and usage tracking
+
+    AGAGI_LLM_CACHE=off skips cache lookups, so repeated benchmark runs sample fresh answers.
     """
+    if os.environ.get("AGAGI_LLM_CACHE", "on").strip().lower() in ("0", "off", "false", "no"):
+        use_cache = False
+
     # Build provider fallback chain
     fallback_chain = (
         [settings.fast_model, settings.primary_model, settings.fallback_model]
@@ -495,7 +524,7 @@ def smoke_test_providers() -> dict[str, dict[str, Any]]:
                 model=model,
                 messages=test_messages,
                 max_tokens=10,
-                timeout=10,
+                timeout=60,  # thinking models (e.g. Gemini 3.x Flash) take ~10 s even for "OK"
                 **call_kwargs,
             )
             content = resp.choices[0].message.content or ""

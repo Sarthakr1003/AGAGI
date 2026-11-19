@@ -26,6 +26,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from core.ablation import ablation_active
 from core.llm import chat_structured
 from core.logging import get_logger
 from core.state import Finding, ReviewState, RootCause, TestCaseResult
@@ -314,6 +315,11 @@ def run_rca_agent(state: ReviewState) -> dict[str, Any]:
     diff = state.get("diff") or ""
     changed_functions = state.get("changed_functions") or []
     feedback = state.get("verification_feedback") or ""
+    retrying = bool(feedback)
+    if ablation_active("no_impact_context"):
+        changed_functions = []
+    if ablation_active("no_feedback"):
+        feedback = ""
 
     workspace_cm = (
         review_workspace(cs.repo_path, cs.base_ref, cs.head_ref)
@@ -323,7 +329,8 @@ def run_rca_agent(state: ReviewState) -> dict[str, Any]:
     with workspace_cm as ws:
         workspace = Path(ws).resolve()
         root_causes = _diagnose(
-            workspace, regressions, all_issues_to_diagnose, diff, changed_functions, feedback, build_log
+            workspace, regressions, all_issues_to_diagnose, diff, changed_functions, feedback, build_log,
+            fresh=retrying,
         )
 
     logger.info(
@@ -342,6 +349,7 @@ def _diagnose(
     changed_functions: list[Any],
     feedback: str,
     build_log: str = "",
+    fresh: bool = False,
 ) -> list[RootCause]:
     reg_items: list[str] = []
     for r in regressions:
@@ -420,7 +428,7 @@ def _diagnose(
             schema=RCAResultOutput,
             use_fast=False,  # Primary model for deep reasoning
             temperature=0.1,
-            use_cache=not feedback,  # a retry must not reuse the answer that already failed
+            use_cache=not (feedback or fresh),  # a retry must not reuse the answer that already failed
         )
         issue_ids = {f.id for f in issues}
         root_causes: list[RootCause] = []

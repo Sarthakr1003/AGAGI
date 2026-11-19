@@ -11,7 +11,6 @@ from __future__ import annotations
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any
 
 from core.logging import get_logger
 from core.state import TestCaseResult

@@ -3,88 +3,412 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Patch Approval</title>
+<title>PATCH APPROVAL // AGAGI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d1117; --panel: #161b22; --panel-2: #0b0f14; --text: #e6edf3; --muted: #8b949e;
-    --accent: #3fb950; --danger: #f85149; --warn: #d29922; --border: #30363d; --link: #58a6ff;
+    --hero-bg: #374a6b;
+    --hero-bg-deep: #283750;
+    --hero-grid: rgba(255, 255, 255, 0.08);
+    --hero-text: #f6eee3;
+    --hero-text-dim: #a9bad3;
+    
+    --cream-bg: #f6eee3;
+    --cream-surface: #efe6d8;
+    --cream-card: #fdfaf6;
+    --cream-border: #d5c8b5;
+    --cream-border-subtle: #e5dacb;
+    
+    --ink: #223147;
+    --ink-muted: #576b88;
+    --ink-dim: #8b9bb3;
+    
+    --accent-blue: #4f74ab;
+    --accent-sky: #709be0;
+    
+    --success: #2e8b57;
+    --success-bg: rgba(46, 139, 87, 0.1);
+    --danger: #cf4444;
+    --danger-bg: rgba(207, 68, 68, 0.1);
+    --warning: #d97706;
+    --warning-bg: rgba(217, 119, 6, 0.1);
+    
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-mono: 'Space Mono', monospace;
+    --font-retro: 'VT323', monospace;
   }
-  * { box-sizing: border-box; }
-  body { margin: 0 auto; max-width: 980px; padding: 24px 16px 64px; background: var(--bg); color: var(--text);
-         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.45; }
-  a { color: var(--link); }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .muted { color: var(--muted); font-size: 13px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--hero-bg);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.04) 3px,
+      rgba(0, 0, 0, 0.04) 6px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Header Top Nav */
+  .top-stage {
+    background: radial-gradient(circle at 50% 40%, var(--hero-bg) 0%, var(--hero-bg-deep) 100%);
+    padding: 24px 32px 30px;
+    border-bottom: 3px solid var(--ink);
+    color: var(--hero-text);
+  }
+  .top-stage-content {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .agagi-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+    color: var(--hero-text);
+  }
+  .agagi-logo-box {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    padding: 6px 12px;
+    border: 2px solid var(--hero-text);
+    border-radius: 2px;
+    letter-spacing: 1px;
+    background: rgba(0, 0, 0, 0.15);
+  }
+  .agagi-brand-title {
+    font-family: var(--font-pixel);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
+
+  .nav-back-link {
+    font-family: var(--font-retro);
+    font-size: 18px;
+    color: var(--hero-text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+  }
+  .nav-back-link:hover { color: #ffffff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
+
+  /* Main Console Area */
+  .console-body {
+    background: var(--cream-bg);
+    padding: 36px 24px 64px;
+    min-height: calc(100vh - 100px);
+  }
+  .content-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: var(--font-pixel);
+    font-size: 18px;
+    margin: 0 0 10px;
+    color: var(--ink);
+    letter-spacing: 2px;
+  }
+
+  .muted {
+    color: var(--ink-muted);
+    font-family: var(--font-retro);
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+    margin-top: 12px;
+  }
   @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-  label { display: block; font-size: 13px; color: var(--muted); margin-top: 12px; }
-  input[type=text] { width: 100%; padding: 8px 10px; background: var(--panel); color: var(--text);
-                     border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
-  button { margin: 14px 8px 0 0; padding: 9px 16px; border: 0; border-radius: 6px; font-weight: 600;
-           cursor: pointer; font-size: 14px; }
+
+  label {
+    display: block;
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    color: var(--ink-muted);
+    margin-top: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  input[type=text] {
+    width: 100%;
+    padding: 10px 12px;
+    background: #ffffff;
+    color: var(--ink);
+    border: 1.5px solid var(--cream-border);
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+    margin-top: 6px;
+  }
+  input[type=text]:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(79, 116, 171, 0.15);
+  }
+
+  button {
+    margin: 16px 8px 0 0;
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 3px;
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+  }
   button:disabled { opacity: .5; cursor: wait; }
-  .go { background: var(--accent); color: #04130a; }
-  .no { background: var(--danger); color: #fff; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-top: 14px; }
-  .card h2 { font-size: 16px; margin: 0 0 8px; }
-  .patch label { color: var(--text); font-size: 15px; font-weight: 600; margin: 0; cursor: pointer; }
-  pre { background: var(--panel-2); padding: 10px; border-radius: 6px; overflow-x: auto; font-size: 12px; margin: 8px 0 0; }
-  .add { color: #56d364; } .del { color: #f85149; } .hunk { color: #79c0ff; }
-  .banner { border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 14px; }
-  .banner.warn { background: rgba(210,153,34,.12); border: 1px solid rgba(210,153,34,.5); }
-  .banner.bad  { background: rgba(248,81,73,.10); border: 1px solid rgba(248,81,73,.5); }
-  .banner.good { background: rgba(63,185,80,.10); border: 1px solid rgba(63,185,80,.5); }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
-          border: 1px solid var(--border); margin-left: 6px; }
-  #status { margin-top: 16px; font-weight: 600; min-height: 1.4em; }
-  ul.attempts { margin: 6px 0 0; padding-left: 20px; }
-  ul.attempts li { margin: 4px 0; }
-  details summary { cursor: pointer; color: var(--muted); margin-top: 8px; }
+
+  .go {
+    background: var(--ink);
+    color: var(--cream-bg);
+  }
+  .go:hover:not(:disabled) {
+    background: var(--accent-blue);
+    box-shadow: 0 3px 12px rgba(79, 116, 171, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .no {
+    background: var(--danger);
+    color: #fff;
+  }
+  .no:hover:not(:disabled) {
+    background: #b91c1c;
+    box-shadow: 0 3px 12px rgba(207, 68, 68, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .card {
+    background: var(--cream-card);
+    border: 1.5px solid var(--cream-border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 16px;
+    box-shadow: 0 2px 8px rgba(34, 49, 71, 0.03);
+  }
+  .card h2 {
+    font-family: var(--font-pixel);
+    font-size: 10px;
+    margin: 0 0 12px;
+    color: var(--ink);
+    letter-spacing: 1px;
+  }
+
+  .patch label {
+    color: var(--ink);
+    font-family: var(--font-retro);
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+  }
+
+  pre {
+    background: #192330;
+    color: #e5f0ff;
+    padding: 14px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    margin: 10px 0 0;
+  }
+
+  .add { color: #86efac; }
+  .del { color: #fca5a5; }
+  .hunk { color: #93c5fd; }
+
+  .banner {
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    font-family: var(--font-retro);
+    font-size: 19px;
+    letter-spacing: 0.5px;
+  }
+  .banner.warn {
+    background: #fef8ee;
+    border: 1px solid var(--warning);
+    color: var(--warning);
+  }
+  .banner.bad {
+    background: #fdf0f0;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+  }
+  .banner.good {
+    background: #eef7f0;
+    border: 1px solid var(--success);
+    color: var(--success);
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    font-weight: 600;
+    border: 1px solid var(--cream-border);
+    background: var(--cream-surface);
+    margin-left: 6px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  #status {
+    margin-top: 18px;
+    font-family: var(--font-retro);
+    font-size: 22px;
+    font-weight: 600;
+    min-height: 1.4em;
+    color: var(--ink);
+    letter-spacing: 0.5px;
+  }
+
+  ul.attempts { margin: 8px 0 0; padding-left: 20px; }
+  ul.attempts li {
+    margin: 6px 0;
+    font-family: var(--font-retro);
+    font-size: 19px;
+    color: var(--ink);
+  }
+
+  details summary {
+    cursor: pointer;
+    color: var(--ink-muted);
+    margin-top: 12px;
+    font-family: var(--font-retro);
+    font-size: 19px;
+    letter-spacing: 0.5px;
+  }
+
+  input[type="checkbox"] {
+    accent-color: var(--ink);
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Footer */
+  .agagi-footer-approval {
+    margin-top: 50px;
+    padding-top: 24px;
+    border-top: 2px solid var(--cream-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--ink-dim);
+  }
 </style>
 </head>
 <body>
-  <h1>Patch Approval</h1>
-  <p class="muted">
-    Runs the review, then pauses so you can approve or reject each proposed fix. Approved fixes are applied to a
-    throwaway copy of the merged code and fully re-tested. Your own files are never changed.
-    <a href="/">Back to dashboard</a>
-  </p>
+  <div class="scanlines"></div>
 
-  <div id="llmBanner" class="banner warn" hidden>
-    No AI key is configured, so root causes come from simple built-in rules and no fixes can be written.
-    Put <code>GEMINI_API_KEY=...</code> in <code>.env</code>, restart the server, and run
-    <code>python -m tools.check_llm</code> to confirm it works.
-  </div>
-
-  <div class="grid">
-    <div>
-      <label for="repo">Repository path</label>
-      <input type="text" id="repo" placeholder="C:\path\to\repo">
-    </div>
-    <div>
-      <label for="who">Your name (recorded as approver)</label>
-      <input type="text" id="who" placeholder="sarthak">
-    </div>
-    <div>
-      <label for="base">Base ref</label>
-      <input type="text" id="base" value="main">
-    </div>
-    <div>
-      <label for="head">Head ref</label>
-      <input type="text" id="head" value="breaks-test">
+  <!-- Top Hero Bar -->
+  <div class="top-stage">
+    <div class="top-stage-content">
+      <a href="/" class="agagi-nav-brand">
+        <div class="agagi-logo-box">AGAGI</div>
+        <div>
+          <div class="agagi-brand-title">AGENTIC REVIEWER</div>
+          <div style="font-family: var(--font-retro); font-size: 16px; color: var(--hero-text-dim);">PATCH APPROVAL GATEWAY</div>
+        </div>
+      </a>
+      <a href="/" class="nav-back-link">▸ RETURN TO DASHBOARD</a>
     </div>
   </div>
 
-  <button class="go" id="run">Run review (approval mode)</button>
+  <!-- Main Console Stage -->
+  <div class="console-body">
+    <div class="content-wrap">
+      <h1>PATCH APPROVAL FLOW</h1>
+      <p class="muted">
+        Runs the review, then pauses so you can approve or reject each proposed fix. Approved fixes are applied to a
+        throwaway copy of the merged code and fully re-tested. Your own files are never changed.
+      </p>
 
-  <div id="status" role="status"></div>
-  <div id="previous"></div>
-  <div id="patches"></div>
-  <div id="actions" hidden>
-    <button class="go" id="approve">Approve selected</button>
-    <button class="no" id="reject">Reject all</button>
+      <div id="llmBanner" class="banner warn" hidden>
+        No AI key is configured, so root causes come from simple built-in rules and no fixes can be written.
+        Put <code>GEMINI_API_KEY=...</code> in <code>.env</code>, restart the server, and run
+        <code>python -m tools.check_llm</code> to confirm it works.
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="repo">Repository Path</label>
+          <input type="text" id="repo" placeholder="C:\path\to\repo">
+        </div>
+        <div>
+          <label for="who">Approver Name</label>
+          <input type="text" id="who" placeholder="your-name">
+        </div>
+        <div>
+          <label for="base">Base Ref</label>
+          <input type="text" id="base" value="main">
+        </div>
+        <div>
+          <label for="head">Head Ref</label>
+          <input type="text" id="head" value="breaks-test">
+        </div>
+      </div>
+
+      <button class="go" id="run">▶ RUN REVIEW (APPROVAL MODE)</button>
+
+      <div id="status" role="status"></div>
+      <div id="previous"></div>
+      <div id="patches"></div>
+      <div id="actions" hidden>
+        <button class="go" id="approve">✔ APPROVE SELECTED</button>
+        <button class="no" id="reject">✖ REJECT ALL</button>
+      </div>
+      <div id="result"></div>
+
+      <!-- Footer Stamp -->
+      <div class="agagi-footer-approval">
+        <div style="font-family: var(--font-pixel); font-size: 8px;">AGAGI // VERIFIED PIPELINE</div>
+        <div>HUMAN-IN-THE-LOOP PATCH GATEWAY</div>
+      </div>
+    </div>
   </div>
-  <div id="result"></div>
 
 <script>
   let threadId = null;
@@ -168,7 +492,7 @@
     }
 
     const card = el("div", "card");
-    card.append(el("h2", "", "Result"));
+    card.append(el("h2", "", "RESULT"));
     const summary = el("p");
     summary.append(document.createTextNode("Verdict "));
     summary.append(el("span", "pill", (d.verdict || "n/a").toUpperCase()));
@@ -180,31 +504,37 @@
 
     if (history.length) {
       const ul = el("ul", "attempts");
-      history.forEach((h) => ul.append(el("li", "", `${h.verified ? "✅" : "❌"} Attempt ${h.attempt}: ${h.summary}`)));
+      history.forEach((h) => ul.append(el("li", "", `${h.verified ? "✔" : "✖"} Attempt ${h.attempt}: ${h.summary}`)));
       card.append(ul);
     }
 
     const det = el("details");
-    det.append(el("summary", "", "Full report"));
+    det.append(el("summary", "", "▸ Full report"));
     const report = el("pre", "", d.report_markdown || "(no report)");
     report.style.whiteSpace = "pre-wrap";
     det.append(report);
     card.append(det);
 
     if (d.thread_id && vo && vo.verified && !d.escalated) {
-      const dl = el("a", "pill", "Download verified fix (.patch)");
+      const dl = el("a", "pill", "DOWNLOAD VERIFIED FIX (.PATCH)");
       dl.href = `/api/review/${d.thread_id}/patch`;
+      dl.style.textDecoration = "none";
+      dl.style.background = "#eef7f0";
+      dl.style.borderColor = "var(--success)";
+      dl.style.color = "var(--success)";
       const hint = el("p", "muted", "Apply it in your project with:  git apply agagi-fix.patch");
       const p0 = el("p");
+      p0.style.marginTop = "12px";
       p0.append(dl);
       card.append(p0, hint);
     }
 
     if (d.thread_id) {
-      const a = el("a", "", "Audit trail for this review");
+      const a = el("a", "", "▸ Audit trail for this review");
       a.href = `/api/review/${d.thread_id}/audit`;
       a.target = "_blank";
       const p = el("p", "muted");
+      p.style.marginTop = "8px";
       p.append(a);
       card.append(p);
     }

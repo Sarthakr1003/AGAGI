@@ -144,6 +144,7 @@ def test_parse_diff_changed_lines() -> None:
 
 def test_sandbox_runner_invalid_workspace() -> None:
     import pytest
+
     from tools.docker_runner import run_in_sandbox
 
     with pytest.raises(FileNotFoundError):
@@ -176,8 +177,8 @@ def test_junit_xml_parser_structured() -> None:
 
 
 def test_baseline_pre_existing_failures_not_blamed() -> None:
-    from core.state import ChangeSet
     from core.orchestrator import run_review
+    from core.state import ChangeSet
 
     with tempfile.TemporaryDirectory() as td:
         repo = Path(td)

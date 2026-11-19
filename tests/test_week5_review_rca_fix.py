@@ -13,25 +13,19 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from agents.fix_agent import (
+    CodeEdit,
     GeneratedPatchOutput,
     generate_patch_for_root_cause,
-    run_fix_agent,
     validate_patch,
 )
 from agents.rca_agent import RCAResultOutput, RootCauseItem, run_rca_agent
 from agents.review_agent import CodeReviewOutput, ReviewComment, run_review_agent
-from core.orchestrator import run_review
 from core.state import (
     ChangeSet,
-    Finding,
     FindingType,
-    Patch,
-    ReviewVerdict,
     RootCause,
     Severity,
     TestCaseResult,
@@ -183,11 +177,11 @@ def test_fix_agent_retries_once_on_failed_diff(tmp_path: Path):
     )
 
     bad_output = GeneratedPatchOutput(
-        unified_diff="--- a/calc.py\n+++ b/calc.py\n@@ -99,1 +99,1 @@\n-bad\n+worse\n",
+        edits=[CodeEdit(search="    return a - b", replace="    return a + b + 0")],  # not in the file
         rationale="Bad patch",
     )
     good_output = GeneratedPatchOutput(
-        unified_diff="--- a/calc.py\n+++ b/calc.py\n@@ -1,2 +1,2 @@\n def add(a, b):\n-    return a + b\n+    return a + b + 0\n",
+        edits=[CodeEdit(search="   2 |     return a + b", replace="    return a + b + 0")],  # copied with line number
         rationale="Correct patch",
     )
 
