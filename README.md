@@ -6,7 +6,7 @@ AGAGI reviews a code change (a branch or pull request) the way a careful senior 
 
 Team: Smruthi Chandrashekar (ENG23AM0281), Sarthak Ramachandra (ENG23AM0185), Claudia Raj (ENG23AM0095).
 
-Original repository: [SmruthiChandrashekar/AGAGI](https://github.com/SmruthiChandrashekar/AGAGI)
+Repository: [Sarthakr1003/AGAGI](https://github.com/Sarthakr1003/AGAGI)
 
 ---
 
